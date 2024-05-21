@@ -19,7 +19,7 @@ const AuthForm = () => {
   const [alertMessage, setAlertMessage] = useState('');
   const [alertType, setAlertType] = useState('success');
   const [user, setUser] = useState(null);
-  const isBasicInfo = "false";
+  const isBasicInfo = false;
 
   const navigate = useNavigate();
 
@@ -57,14 +57,17 @@ const AuthForm = () => {
       if (isRegisterMode) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
+        const userId = user.uid; // Access user ID
 
         const usersCollectionRef = collection(firestore, 'users');
-        await addDoc(usersCollectionRef, {
+        const userRef = doc(usersCollectionRef, userId);
+        const userData = {
           email,
           firstName,
           lastName,
           isBasicInfo,
-        });
+        };
+        await setDoc(userRef, userData);
 
         showAlert('User registered successfully!', 'success');
         location.reload()

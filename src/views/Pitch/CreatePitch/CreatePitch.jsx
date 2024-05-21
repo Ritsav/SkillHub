@@ -1,11 +1,11 @@
-import { addDoc, doc, collection, setDoc } from "firebase/firestore";
-import React, { useState } from "react";
-import { firestore } from "../../../firebase/firebase.js";
-import { auth } from "../../../firebase/firebase.js";
+import { addDoc, collection } from "firebase/firestore";
+import React, { useState, useEffect } from "react";
+import { firestore, auth } from "../../../firebase/firebase.js";
 import "./CreatePitch.css";
 import AuthNavbar from '../../../components/Navbar/AuthNavbar.jsx'
 
 function CreatePitch() {
+
   const [formData, setFormData] = useState({
     nameOfInstitute: "",
     level: "",
@@ -21,13 +21,37 @@ function CreatePitch() {
   });
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user) {
+      setUserId(user.uid);
+      console.log("User ID:", user.uid);
+    } else {
+      console.log("No user is signed in.");
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+    if (name.startsWith("memberEmail")) {
+      const index = parseInt(name.split("-")[1]);
+      
+      setFormData((prevState) => {
+        const updatedTeamMembers = [...prevState.teamMembers];
+        if (!updatedTeamMembers[index]) {
+          updatedTeamMembers[index] = {};
+        }
+        updatedTeamMembers[index]["email"] = value;
+        return { ...prevState, teamMembers: updatedTeamMembers };
+      });
+    } else {
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: value,
+      }));
+    }
   };
 
   const handleOptionChange = (e) => {
@@ -78,29 +102,13 @@ function CreatePitch() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Get the currently authenticated user's UID
-      const user = auth.currentUser;
-      const userId = user.uid;
 
       const formDataRef = collection(firestore, "pitches");
 
       const teamMembers = [];
-
-      for (let i = 0; i < formData.noOfMembers; i++) {
-        if (
-          formData[`Name${i + 1}`] &&
-          formData[`Email${i + 1}`] &&
-          formData[`Address${i + 1}`] &&
-          formData[`Phone${i + 1}`]
-        ) {
-          teamMembers.push({
-            name: formData[`Name${i + 1}`],
-            email: formData[`Email${i + 1}`],
-            address: formData[`Address${i + 1}`],
-            phone: formData[`Phone${i + 1}`],
-          });
-        }
-      }
+      for(let i = 0; i < formData.noOfMembers; i++){
+        teamMembers.push(formData.teamMembers[i].email);
+      };
 
       // Object containing all the form data
       const formDataMap = {
@@ -117,6 +125,7 @@ function CreatePitch() {
         },
         noOfMembers: formData.noOfMembers,
         teamMembers: teamMembers,
+        
         funding: {
           amount: formData.amount,
           reason: formData.reason,
@@ -138,26 +147,7 @@ function CreatePitch() {
         uspAndSolution: "",
         
         noOfMembers: "",
-        ...Object.fromEntries(
-          Object.keys(formData)
-            .filter((key) => key.startsWith("Name"))
-            .map((key) => [key, ""])
-        ),
-        ...Object.fromEntries(
-          Object.keys(formData)
-            .filter((key) => key.startsWith("Email"))
-            .map((key) => [key, ""])
-        ),
-        ...Object.fromEntries(
-          Object.keys(formData)
-            .filter((key) => key.startsWith("Address"))
-            .map((key) => [key, ""])
-        ),
-        ...Object.fromEntries(
-          Object.keys(formData)
-            .filter((key) => key.startsWith("Phone"))
-            .map((key) => [key, ""])
-        ),
+        teamMembers: [],
 
         reason: "",
         amount: "",
@@ -167,72 +157,23 @@ function CreatePitch() {
     }
   };
 
-  //Array of JSX elements for team members
-
   const memberElements = [];
   for (let i = 0; i < formData.noOfMembers; i++) {
     memberElements.push(
       <div key={i} style={{ marginBottom: "30px" }}>
-        <label htmlFor={`memberName${i + 1}`} className="member-label">
-          Member {i + 1}: <br></br>Name:{" "}
+        <label className="member-label">
+          Member {i + 1}: 
         </label>
-        <input
-          type="text"
-          id={`memberName${i + 1}`}
-          name={`memberName${i + 1}`}
-          className="member-name"
-          value={formData[`Name${i + 1}`]}
-          onChange={handleChange}
-          required
-        />
 
-        <label
-          htmlFor={`memberName${i + 1}`}
-          className="member-label"
-          style={{ marginBottom: "30px" }}
-        >
-          <br></br>Email:{" "}
+        <label htmlFor={`memberEmail-${i}`} className="member-label" style={{ marginBottom: "30px" }}>
+          <br />Email: 
         </label>
         <input
           type="text"
-          id={`memberEmail${i + 1}`}
-          name={`memberEmail${i + 1}`}
+          id={`memberEmail-${i}`}
+          name={`memberEmail-${i}`}
           className="member-email"
-          value={formData[`Email${i + 1}`]}
-          onChange={handleChange}
-          required
-        />
-
-        <label
-          htmlFor={`memberName${i + 1}`}
-          className="member-label"
-          style={{ marginBottom: "30px" }}
-        >
-          <br></br>Address:{" "}
-        </label>
-        <input
-          type="text"
-          id={`memberAddress${i + 1}`}
-          name={`memberAddress${i + 1}`}
-          className="member-address"
-          value={formData[`Address${i + 1}`]}
-          onChange={handleChange}
-          required
-        />
-
-        <label
-          htmlFor={`memberName${i + 1}`}
-          className="member-number"
-          style={{ marginBottom: "30px" }}
-        >
-          <br></br>Number:{" "}
-        </label>
-        <input
-          type="number"
-          id={`memberPhone${i + 1}`}
-          name={`memberPhone${i + 1}`}
-          className="member-phone"
-          value={formData[`Phone${i + 1}`]}
+          value={formData.teamMembers[i]?.email || ""}
           onChange={handleChange}
           required
         />
@@ -357,18 +298,6 @@ function CreatePitch() {
                 />
               </div>
 
-              <div style={{ marginBottom: "30px" }}>
-                <label htmlFor="noOfMembers">Number of team members: </label>
-                <input
-                  type="number"
-                  id="noOfMembers"
-                  name="noOfMembers"
-                  value={formData.noOfMembers}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
               <div className="btn-container">
                 <button type="button" className="btn-prev" onClick={handlePrev}>
                   Previous
@@ -384,7 +313,28 @@ function CreatePitch() {
             <>
               <h1 id="Header">Team Members</h1>
 
-              {memberElements}
+              <div style={{ marginBottom: "20px" }}>
+                <label htmlFor="noOfMembers">Number of team members: </label>
+                <input
+                  type="number"
+                  id="noOfMembers"
+                  name="noOfMembers"
+                  value={formData.noOfMembers}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <p>
+                <i>
+                  <b>Disclaimer: </b> 
+                  Ensure that the email of your team members corresponds to the email that they have registered with in ProPitch.
+                </i>
+              </p>
+             
+              <div style={{ marginBottom: "30px" }}></div>
+              
+              {memberElements} {/* Calling the members array accorrding to the number of members. */}
 
               <div className="btn-container">
                 <button type="button" className="btn-prev" onClick={handlePrev}>
