@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { doc, updateDoc } from "firebase/firestore";
 import "./BasicInfoForm.css";
-import { firestore } from '../firebase/firebase.js';
+import { firestore } from '../../firebase/firebase.js';
 
 function BasicInfo({ userDocId, onFormSubmit }) {
   const [formData, setFormData] = useState({
     nameOfApplicant: '',
     phone: '',
     location: '',
+    userType: '',
   });
 
   const handleChange = (e) => {
@@ -15,6 +16,14 @@ function BasicInfo({ userDocId, onFormSubmit }) {
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
+    }));
+  };
+
+  const handleOptionChange = (e) => {
+    const selectedOption = e.target.value;
+    setFormData((prevState) => ({
+      ...prevState,
+      userType: selectedOption,
     }));
   };
 
@@ -30,6 +39,7 @@ function BasicInfo({ userDocId, onFormSubmit }) {
           location: formData.location,
         },
         isBasicInfo: true,
+        userType: formData.userType,
       };
 
       await updateDoc(formDataRef, formDataMap);
@@ -39,6 +49,7 @@ function BasicInfo({ userDocId, onFormSubmit }) {
         nameOfApplicant: "",
         phone: '',
         location: '',
+        userType: '',
       });
 
       onFormSubmit(); // Call the callback function to update parent state
@@ -99,6 +110,23 @@ function BasicInfo({ userDocId, onFormSubmit }) {
               required
             />
           </div>
+
+          <div style={{ marginBottom: "30px" }}>
+                <label htmlFor="level" style={{ paddingRight: "30px" }}>
+                  User Type:
+                </label>
+
+                <select
+                  id="level"
+                  name="level"
+                  value={formData.userType}
+                  onChange={handleOptionChange}
+                >
+                  <option value="">-- Select --</option>
+                  <option value="User">User</option>
+                  <option value="Investor">Investor</option>
+                </select>
+              </div>
 
           <button type="submit" className="btn-next">
             Submit

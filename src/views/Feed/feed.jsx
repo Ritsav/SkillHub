@@ -4,7 +4,8 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { firestore } from '../../firebase/firebase';
 import { auth } from "../../firebase/firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
-import BasicInfo from '../../components/BasicInfoForm.jsx';
+import BasicInfo from '../../components/BasicInfoForm/BasicInfoForm.jsx';
+import PitchDisplay from './PitchDisplay/pitchDisplay.jsx';
 
 const Feed = () => {
   const [user, setUser] = useState(null);
@@ -55,13 +56,16 @@ const Feed = () => {
 
   if (user && user.isBasicInfo) {
     return (
-      <div>
+      <>
         <AuthNavbar />
-      </div>
+        <PitchDisplay />
+      </>
     );
   } else {
     return (
-      <BasicInfo userDocId={userDocId} onFormSubmit={() => setUser({ ...user, isBasicInfo: true })}/> // Pass the document ID and callback function
+      <>
+        <BasicInfo userDocId={userDocId} onFormSubmit={() => setUser({ ...user, isBasicInfo: true })}/> {/* Pass the document ID and callback function*/}
+      </>
     );
   }
 }
