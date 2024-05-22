@@ -1,0 +1,70 @@
+.pitchDetails {
+    max-width: 800px; /* Increased max-width for better layout on larger screens */
+    margin: 20px auto; /* Center the container and add top/bottom margin */
+    padding: 30px; /* Increased padding for better spacing */
+    border-radius: 10px;
+    background-color: #ffffff; /* Slightly off-white for a softer look */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Softer shadow for a modern look */
+    overflow: hidden; /* Ensure no overflow */
+    word-wrap: break-word; /* Handle long words */
+    transition: transform 0.3s ease; /* Smooth transition for hover effect */
+}
+
+.pitchDetails h1 {
+    font-size: 28px; /* Slightly larger font for the title */
+    margin-bottom: 20px;
+    color: #2c3e50; /* Darker color for better contrast */
+    word-wrap: break-word; /* Ensure long titles break properly */
+}
+
+.pitchDetails h2 {
+    font-size: 20px; /* Slightly larger font for the title */
+    margin-bottom: 20px;
+    color: #2c3e50; /* Darker color for better contrast */
+    word-wrap: break-word; /* Ensure long titles break properly */
+}
+
+.pitchDetails p {
+    font-size: 18px; /* Slightly larger font for better readability */
+    line-height: 1.6; /* Increased line-height for better readability */
+    color: #34495e; /* Softer dark color for the text */
+    margin-bottom: 15px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal; /* Allows text to wrap */
+}
+
+/* Add some media queries for better responsiveness */
+@media (max-width: 768px) {
+    .pitchDetails {
+        padding: 20px;
+        margin: 10px;
+    }
+
+    .pitchDetails h1 {
+        font-size: 24px;
+    }
+
+    .pitchDetails p {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pitchDetails {
+        padding: 15px;
+    }
+
+    .pitchDetails h1 {
+        font-size: 20px;
+    }
+
+    .pitchDetails p {
+        font-size: 14px;
+    }
+}
+
+.blockSpacing{
+    margin-top: 50px;
+    margin-bottom: 50px;
+}

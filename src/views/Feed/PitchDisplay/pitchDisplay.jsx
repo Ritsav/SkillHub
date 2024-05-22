@@ -30,7 +30,9 @@ function PitchDisplay() {
                     pitchesData.push({
                         id: doc.id, // Store the document ID
                         description: data.projectDescription,
-                        title: data.projectName
+                        title: data.projectName,
+                        statement: data.projectStatement,
+                        problem: data.problemStatement,
                     });
                 });
 

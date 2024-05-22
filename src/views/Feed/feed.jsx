@@ -14,16 +14,16 @@ const Feed = () => {
   const [userDocId, setUserDocId] = useState(null);
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUser = async (currentUser) => {
       try {
         const usersRef = collection(firestore, "users");
-        const q = query(usersRef, where("email", "==", auth.currentUser.email)); // Query by email
+        const q = query(usersRef, where("email", "==", currentUser.email)); // Query by email
         const querySnapshot = await getDocs(q);
         const fetchedUsers = [];
         querySnapshot.forEach((doc) => {
           fetchedUsers.push({ id: doc.id, ...doc.data() }); // Store document ID
         });
-        const filteredUser = fetchedUsers.find(user => user.email === auth.currentUser.email);
+        const filteredUser = fetchedUsers.find(user => user.email === currentUser.email);
         setUser(filteredUser);
         setUserDocId(filteredUser?.id); // Set the document ID
       } catch (error) {
@@ -34,12 +34,12 @@ const Feed = () => {
       }
     };
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        fetchUser();
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        fetchUser(currentUser);
       } else {
         setLoading(false);
-        setError("User not authenticated");
+        setUser(null);
       }
     });
 
@@ -47,7 +47,11 @@ const Feed = () => {
   }, []);
 
   if (loading) {
-    return <p>Loading...</p>;
+    return(
+      <>
+        <p>Loading...</p>
+      </>
+    );
   }
 
   if (error) {
@@ -61,10 +65,17 @@ const Feed = () => {
         <PitchDisplay />
       </>
     );
+  } else if (user === null) {
+    return (
+      <>
+        <AuthNavbar />
+        <PitchDisplay />
+      </>
+    );
   } else {
     return (
       <>
-        <BasicInfo userDocId={userDocId} onFormSubmit={() => setUser({ ...user, isBasicInfo: true })}/> {/* Pass the document ID and callback function*/}
+        <BasicInfo userDocId={userDocId} onFormSubmit={() => setUser({ ...user, isBasicInfo: true })}/> {/* Pass the document ID and callback function */}
       </>
     );
   }
