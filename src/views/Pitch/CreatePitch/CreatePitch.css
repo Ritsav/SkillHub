@@ -125,7 +125,7 @@
     background-color: #007bff;
 }
 
-#description, #problem, #usp\&Soln, #reason{
+#projectDescription, #problemStatement, #uspAndSolution, #reason{
     width: 100%;
     height: 200px;
     padding: 10px;

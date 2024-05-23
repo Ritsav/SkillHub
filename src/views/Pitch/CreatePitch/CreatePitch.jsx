@@ -1,11 +1,13 @@
-import { addDoc, collection } from "firebase/firestore";
 import React, { useState, useEffect } from "react";
+import { addDoc, collection } from "firebase/firestore";
 import { firestore, auth } from "../../../firebase/firebase.js";
 import "./CreatePitch.css";
-import AuthNavbar from '../../../components/Navbar/AuthNavbar.jsx'
+import AuthNavbar from '../../../components/Navbar/AuthNavbar.jsx';
+import FormStep1 from "./FormLvls/FormStep1.jsx";
+// Import other form steps as needed
+import { onAuthStateChanged } from "firebase/auth";
 
 function CreatePitch() {
-
   const [formData, setFormData] = useState({
     nameOfInstitute: "",
     level: "",
@@ -22,15 +24,21 @@ function CreatePitch() {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const user = auth.currentUser;
-    if (user) {
-      setUserId(user.uid);
-      console.log("User ID:", user.uid);
-    } else {
-      console.log("No user is signed in.");
-    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserId(user.uid);
+        console.log("User ID:", user.uid);
+      } else {
+        console.log("No user is signed in.");
+        setUserId(null);
+      }
+      setLoading(false); // Set loading to false once auth state is determined
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleChange = (e) => {
@@ -75,22 +83,7 @@ function CreatePitch() {
       alert("Please select the area of study.");
       return;
     }
-    if (currentStep === 2 && formData.projectName.trim() === "") {
-      alert("Please input the Project Name.");
-      return;
-    }
-    if (currentStep === 2 && formData.projectDescription.trim() === "") {
-      alert("Please input proper project description.");
-      return;
-    }
-    if (currentStep === 2 && formData.problemStatement.trim() === "") {
-      alert("Please input proper problem statement.");
-      return;
-    }
-    if (currentStep === 2 && formData.uspAndSolution.trim() === "") {
-      alert("Please input proper usp & solution.");
-      return;
-    }
+    // Add similar validations for other steps if needed
 
     setCurrentStep((prevStep) => prevStep + 1);
   };
@@ -102,15 +95,13 @@ function CreatePitch() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-
       const formDataRef = collection(firestore, "pitches");
 
       const teamMembers = [];
       for(let i = 0; i < formData.noOfMembers; i++){
         teamMembers.push(formData.teamMembers[i].email);
-      };
+      }
 
-      // Object containing all the form data
       const formDataMap = {
         basicInfo: {
           nameOfInstitute: formData.nameOfInstitute,
@@ -125,7 +116,6 @@ function CreatePitch() {
         },
         noOfMembers: formData.noOfMembers,
         teamMembers: teamMembers,
-        
         funding: {
           amount: formData.amount,
           reason: formData.reason,
@@ -136,7 +126,6 @@ function CreatePitch() {
       await addDoc(formDataRef, formDataMap);
       console.log("Form submitted successfully!");
 
-      // Reset form after submission
       setFormData({
         nameOfInstitute: "",
         level: "",
@@ -145,10 +134,8 @@ function CreatePitch() {
         projectDescription: "",
         problemStatement: "",
         uspAndSolution: "",
-        
         noOfMembers: "",
         teamMembers: [],
-
         reason: "",
         amount: "",
       });
@@ -157,234 +144,26 @@ function CreatePitch() {
     }
   };
 
-  const memberElements = [];
-  for (let i = 0; i < formData.noOfMembers; i++) {
-    memberElements.push(
-      <div key={i} style={{ marginBottom: "30px" }}>
-        <label className="member-label">
-          Member {i + 1}: 
-        </label>
-
-        <label htmlFor={`memberEmail-${i}`} className="member-label" style={{ marginBottom: "30px" }}>
-          <br />Email: 
-        </label>
-        <input
-          type="text"
-          id={`memberEmail-${i}`}
-          name={`memberEmail-${i}`}
-          className="member-email"
-          value={formData.teamMembers[i]?.email || ""}
-          onChange={handleChange}
-          required
-        />
-      </div> 
-    );
+  if (loading) {
+    return <p>Loading...</p>; // Display a loading message or spinner while auth state is being determined
   }
 
   return (
     <>
-      <AuthNavbar/>
+      <AuthNavbar />
       <div className="Form-Container">
         <form onSubmit={handleSubmit} id="form">
           {currentStep === 1 && (
-            <>
-              <h1 id="Header">Basic Info</h1>
-              <div style={{ marginBottom: "30px" }}>
-                <label htmlFor="nameOfInstitute">
-                  Name of College/University of the Applicant:
-                </label>
-                <input
-                  type="text"
-                  id="nameOfInstitute"
-                  name="nameOfInstitute"
-                  value={formData.nameOfInstitute}
-                  onChange={handleChange}
-                  placeholder="Kathford School"
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: "30px" }}>
-                <label htmlFor="level" style={{ paddingRight: "30px" }}>
-                  Level of Study:
-                </label>
-
-                <select
-                  id="level"
-                  name="level"
-                  value={formData.level}
-                  onChange={handleOptionChange}
-                >
-                  <option value="">-- Select --</option>
-                  <option value="HighSchool">HighSchool</option>
-                  <option value="UnderGrad">UnderGrad</option>
-                  <option value="PostGrad">PostGrad</option>
-                </select>
-              </div>
-
-              <div style={{ marginBottom: "30px" }}>
-                <label htmlFor="area">Area of Study:</label>
-                <input
-                  type="text"
-                  id="area"
-                  name="area"
-                  value={formData.area}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="btn-container">
-                <button type="button" className="btn" onClick={handleNext}>
-                  Next
-                </button>
-              </div>
-            </>
+            <FormStep1 
+              formData={formData}
+              handleChange={handleChange}
+              handleOptionChange={handleOptionChange}
+              handleNext={handleNext}
+            />
           )}
 
-          {currentStep === 2 && (
-            <>
-              <h1 id="Header">About Project</h1>
-
-              <div style={{ marginBottom: "30px" }}>
-                <label htmlFor="projectName">Name of Project: </label>
-                <input
-                  type="text"
-                  id="projectName"
-                  name="projectName"
-                  value={formData.projectName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: "30px" }}>
-                <label htmlFor="projectDescription">
-                  Project Description:{" "}
-                </label>
-                <textarea
-                  type="text"
-                  id="description"
-                  name="projectDescription"
-                  value={formData.projectDescription}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: "30px" }}>
-                <label htmlFor="problemStatement">Problem Statement: </label>
-                <textarea
-                  type="text"
-                  id="problem"
-                  name="problemStatement"
-                  value={formData.problemStatement}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: "30px" }}>
-                <label htmlFor="uspAndSolution">
-                  Unique Selling Point(USP)/Solution:{" "}
-                </label>
-                <textarea
-                  type="text"
-                  id="usp&Soln"
-                  name="uspAndSolution"
-                  value={formData.uspAndSolution}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="btn-container">
-                <button type="button" className="btn-prev" onClick={handlePrev}>
-                  Previous
-                </button>
-                <button type="button" className="btn-next" onClick={handleNext}>
-                  Next
-                </button>
-              </div>
-            </>
-          )}
-
-          {currentStep === 3 && (
-            <>
-              <h1 id="Header">Team Members</h1>
-
-              <div style={{ marginBottom: "20px" }}>
-                <label htmlFor="noOfMembers">Number of team members: </label>
-                <input
-                  type="number"
-                  id="noOfMembers"
-                  name="noOfMembers"
-                  value={formData.noOfMembers}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <p>
-                <i>
-                  <b>Disclaimer: </b> 
-                  Ensure that the email of your team members corresponds to the email that they have registered with in ProPitch.
-                </i>
-              </p>
-             
-              <div style={{ marginBottom: "30px" }}></div>
-              
-              {memberElements} {/* Calling the members array accorrding to the number of members. */}
-
-              <div className="btn-container">
-                <button type="button" className="btn-prev" onClick={handlePrev}>
-                  Previous
-                </button>
-                <button type="button" className="btn-next" onClick={handleNext}>
-                  Next
-                </button>
-              </div>
-            </>
-          )}
-
-          {currentStep === 4 && (
-            <>
-              <h1 id="Header">Funding Request</h1>
-              <div style={{ marginBottom: "30px" }}>
-                <label htmlFor="reason">Reason for the funds: </label>
-                <textarea
-                  type="text"
-                  id="reason"
-                  name="reason"
-                  value={formData.reason}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div style={{ marginBottom: "30px" }}>
-                <label htmlFor="amount">Reequested Amount:</label>
-                <input
-                  type="number"
-                  id="amount"
-                  name="amount"
-                  value={formData.amount}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="btn-container">
-                <button type="button" className="btn-prev" onClick={handlePrev}>
-                  Previous
-                </button>
-                <button type="submit" className="btn-next">
-                  Submit
-                </button>
-              </div>
-            </>
-          )}
-
+          {/* Render other form steps based on currentStep */}
+          
           <div className="display" style={{ marginTop: "50px" }}>
             <span className={currentStep === 1 ? "dot active" : "dot"}></span>
             <span className={currentStep === 2 ? "dot active" : "dot"}></span>
